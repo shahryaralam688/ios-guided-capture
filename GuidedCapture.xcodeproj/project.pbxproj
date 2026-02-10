@@ -43,6 +43,8 @@
 		70D2F73D2A33A38900EFA0D8 /* ScanPasses-iPhone-FixedHeight-unflippable-low.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 70D2F72D2A33A37E00EFA0D8 /* ScanPasses-iPhone-FixedHeight-unflippable-low.mp4 */; };
 		70D2F73E2A33A38900EFA0D8 /* ScanPasses-iPad-FixedHeight-unflippable-high.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 70D2F7322A33A37E00EFA0D8 /* ScanPasses-iPad-FixedHeight-unflippable-high.mp4 */; };
 		70D2F73F2A33A38900EFA0D8 /* ScanPasses-iPad-FixedHeight-1.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 70D2F7342A33A37E00EFA0D8 /* ScanPasses-iPad-FixedHeight-1.mp4 */; };
+		B59203422F3B70CA005E96DC /* ImageUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59203412F3B70CA005E96DC /* ImageUploadService.swift */; };
+		B59203482F3B974E005E96DC /* ARModelPickerView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59203472F3B974E005E96DC /* ARModelPickerView 2.swift */; };
 		EB20D5602A40331F00992055 /* AppDataModel+Orbit.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */; };
 		EB20D5622A40341C00992055 /* AppDataModel+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D5612A40341C00992055 /* AppDataModel+State.swift */; };
 		EB20D5652A40363D00992055 /* CaptureOverlayView+Buttons.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D5642A40363D00992055 /* CaptureOverlayView+Buttons.swift */; };
@@ -88,6 +90,8 @@
 		70D2F7332A33A37E00EFA0D8 /* ScanPasses-iPhone-FixedHeight-unflippable-high.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ScanPasses-iPhone-FixedHeight-unflippable-high.mp4"; sourceTree = "<group>"; };
 		70D2F7342A33A37E00EFA0D8 /* ScanPasses-iPad-FixedHeight-1.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ScanPasses-iPad-FixedHeight-1.mp4"; sourceTree = "<group>"; };
 		70D2F7352A33A37E00EFA0D8 /* ScanPasses-iPhone-FixedHeight-3.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ScanPasses-iPhone-FixedHeight-3.mp4"; sourceTree = "<group>"; };
+		B59203412F3B70CA005E96DC /* ImageUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadService.swift; sourceTree = "<group>"; };
+		B59203472F3B974E005E96DC /* ARModelPickerView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ARModelPickerView 2.swift"; sourceTree = "<group>"; };
 		B63694814766022DF0079B53 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
 		EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDataModel+Orbit.swift"; sourceTree = "<group>"; };
 		EB20D5612A40341C00992055 /* AppDataModel+State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDataModel+State.swift"; sourceTree = "<group>"; };
@@ -127,11 +131,13 @@
 		70D2F6ED2A339DD500EFA0D8 /* GuidedCapture */ = {
 			isa = PBXGroup;
 			children = (
+				B59203472F3B974E005E96DC /* ARModelPickerView 2.swift */,
 				4A3358052B07FB5A00B5603A /* Info.plist */,
 				70D2F72B2A33A34B00EFA0D8 /* Resources */,
 				70D2F6F22A339DD600EFA0D8 /* Assets.xcassets */,
 				70D2F70E2A339E4A00EFA0D8 /* AppDataModel.swift */,
 				EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */,
+				B59203412F3B70CA005E96DC /* ImageUploadService.swift */,
 				EB20D5612A40341C00992055 /* AppDataModel+State.swift */,
 				70D2F7052A339E4A00EFA0D8 /* CaptureFolderManager.swift */,
 				70D2F6FD2A339E4A00EFA0D8 /* CaptureOverlayView.swift */,
@@ -284,8 +290,10 @@
 				70D2F7292A339E4A00EFA0D8 /* PlayerView.swift in Sources */,
 				70D2F7222A339E4A00EFA0D8 /* OnboardingButtonView+LocalizedString.swift in Sources */,
 				70D2F7202A339E4A00EFA0D8 /* TimedMessageList.swift in Sources */,
+				B59203482F3B974E005E96DC /* ARModelPickerView 2.swift in Sources */,
 				EB20D5652A40363D00992055 /* CaptureOverlayView+Buttons.swift in Sources */,
 				70D2F7162A339E4A00EFA0D8 /* GuidedCaptureSampleApp.swift in Sources */,
+				B59203422F3B70CA005E96DC /* ImageUploadService.swift in Sources */,
 				70D2F71F2A339E4A00EFA0D8 /* TutorialVideoView.swift in Sources */,
 				70D2F7192A339E4A00EFA0D8 /* HelpPageView.swift in Sources */,
 				70D2F7152A339E4A00EFA0D8 /* OnboardingTutorialView+LocalizedString.swift in Sources */,
@@ -442,7 +450,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"GuidedCapture/Preview Content\"";
-				DEVELOPMENT_TEAM = X5J42RJDZY;
+				DEVELOPMENT_TEAM = 7L4359M6G7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GuidedCapture/Info.plist;
@@ -459,7 +467,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.sfomuseum.photogrammety.guidedcapture;
+				PRODUCT_BUNDLE_IDENTIFIER = org.sfomuseum.photogrammety.guidedcapture55;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -483,7 +491,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"GuidedCapture/Preview Content\"";
-				DEVELOPMENT_TEAM = X5J42RJDZY;
+				DEVELOPMENT_TEAM = 7L4359M6G7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GuidedCapture/Info.plist;
@@ -500,7 +508,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.sfomuseum.photogrammety.guidedcapture;
+				PRODUCT_BUNDLE_IDENTIFIER = org.sfomuseum.photogrammety.guidedcapture55;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRIP_INSTALLED_PRODUCT = NO;

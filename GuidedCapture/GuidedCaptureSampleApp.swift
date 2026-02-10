@@ -14,7 +14,8 @@ struct GuidedCaptureSampleApp: App {
     var body: some Scene {
         WindowGroup {
             if #available(iOS 17.0, *) {
-                ContentView()
+//                ContentView()
+                ARModelPickerView()
             }
         }
     }

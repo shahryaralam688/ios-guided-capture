@@ -9,6 +9,7 @@ import Foundation
 import RealityKit
 import SwiftUI
 import os
+import Combine
 
 @available(iOS 17.0, *)
 struct ReconstructionPrimaryView: View {
@@ -17,12 +18,28 @@ struct ReconstructionPrimaryView: View {
 
     @State private var completed: Bool = false
     @State private var cancelled: Bool = false
+    
+    // Computed property to access uploadService safely
+    private var uploadService: ImageUploadService? {
+        return appModel.uploadService
+    }
 
     var body: some View {
         if completed && !cancelled {
-            ModelView(modelFile: outputFile, endCaptureCallback: { [weak appModel] in
-                appModel?.endCapture()
-            })
+            VStack {
+                ModelView(modelFile: outputFile, endCaptureCallback: { [weak appModel] in
+                    appModel?.endCapture()
+                })
+                
+                // Upload progress section
+                if let uploadService = uploadService, uploadService.isUploading {
+                    UploadProgressView(uploadService: uploadService)
+                        .padding()
+                        .background(Color.black.opacity(0.8))
+                        .cornerRadius(10)
+                        .padding()
+                }
+            }
         } else {
             ReconstructionProgressView(outputFile: outputFile,
                                        completed: $completed,
@@ -250,5 +267,33 @@ private struct TitleView: View {
             value: "Processing",
             comment: "Title of processing view during processing phase."
         )
+    }
+}
+
+// MARK: - Upload Progress View
+@available(iOS 17.0, *)
+struct UploadProgressView: View {
+    @ObservedObject var uploadService: ImageUploadService
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("Uploading Images")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            ProgressView(value: uploadService.uploadProgress, total: 1.0)
+                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                .scaleEffect(y: 2.0)
+            
+            Text(uploadService.uploadStatus)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.8))
+            
+            Text("\(Int(uploadService.uploadProgress * 100))%")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+        }
+        .frame(minWidth: 200)
     }
 }

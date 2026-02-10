@@ -9,6 +9,7 @@ import Combine
 import RealityKit
 import SwiftUI
 import os
+import Foundation
 
 @MainActor
 @available(iOS 17.0, *)
@@ -42,6 +43,9 @@ class AppDataModel: ObservableObject, Identifiable {
 
     /// The folder set when a new capture session starts.
     private(set) var scanFolderManager: CaptureFolderManager!
+    
+    /// Image upload service for backend integration
+    var uploadService: ImageUploadService!
 
     @Published var messageList = TimedMessageList()
 
@@ -87,11 +91,13 @@ class AppDataModel: ObservableObject, Identifiable {
 
     private init(objectCaptureSession: ObjectCaptureSession) {
         self.objectCaptureSession = objectCaptureSession
+        uploadService = ImageUploadService()
         state = .ready
     }
 
     // Leaves the model state in ready.
      private init() {
+        uploadService = ImageUploadService()
         state = .ready
     }
 
@@ -232,6 +238,7 @@ class AppDataModel: ObservableObject, Identifiable {
         photogrammetrySession = nil
         objectCaptureSession = nil
         scanFolderManager = nil
+        uploadService = ImageUploadService()
         showPreviewModel = false
         orbit = .orbit1
         orbitState = .initial
@@ -332,12 +339,73 @@ class AppDataModel: ObservableObject, Identifiable {
                     // try? FileManager.default.removeItem(at: snapshotsFolder)
                     // END OF custom - this needs a confirmation dialog or equivalent (settings panel?)
                 }
+                
+                // START: Upload captured images to backend
+                uploadCapturedImages()
+                // END: Upload captured images to backend
 
             case .failed:
                 logger.error("App failed state error=\(String(describing: self.error!))")
                 // Shows error screen.
             default:
                 break
+        }
+    }
+    
+    /// Uploads all captured images to the backend after reconstruction is complete
+    private func uploadCapturedImages() {
+        guard let folderManager = scanFolderManager else {
+            logger.error("scanFolderManager is nil, cannot upload images")
+            return
+        }
+        
+        logger.info("Starting image upload process...")
+        print("[AppDataModel] Images folder path: \(folderManager.imagesFolder.path)")
+        
+        // Get all image files from the images folder
+        Task {
+            do {
+                let imageUrls = try FileManager.default
+                    .contentsOfDirectory(at: folderManager.imagesFolder,
+                                         includingPropertiesForKeys: [.fileSizeKey],
+                                         options: [.skipsHiddenFiles])
+                    .filter { $0.pathExtension.lowercased() == "heic" }
+                    .sorted { $0.lastPathComponent < $1.lastPathComponent }
+                
+                logger.info("Found \(imageUrls.count) images to upload")
+                print("[AppDataModel] Found \(imageUrls.count) HEIC images:")
+                for (index, url) in imageUrls.enumerated() {
+                    print("[AppDataModel] \(index + 1). \(url.lastPathComponent) - \(url.path)")
+                }
+                
+                if imageUrls.isEmpty {
+                    logger.warning("No images found to upload")
+                    return
+                }
+                
+                // Upload images using the upload service
+                await MainActor.run {
+                    uploadService.uploadImages(imageUrls: imageUrls) { [weak self] result in
+                        guard let self = self else { return }
+                        
+                        switch result {
+                        case .success:
+                            self.logger.info("All images uploaded successfully to backend")
+                            self.messageList.add("Images uploaded successfully to server")
+                            print("[AppDataModel] Upload SUCCESS - All images sent to backend")
+                        case .failure(let error):
+                            self.logger.error("Image upload failed: \(error.localizedDescription)")
+                            self.messageList.add("Upload failed: \(error.localizedDescription)")
+                            print("[AppDataModel] Upload FAILED: \(error.localizedDescription)")
+                        }
+                    }
+                }
+                
+            } catch {
+                logger.error("Failed to get image URLs for upload: \(error.localizedDescription)")
+                messageList.add("Failed to prepare images for upload")
+                print("[AppDataModel] Failed to read images folder: \(error.localizedDescription)")
+            }
         }
     }
 

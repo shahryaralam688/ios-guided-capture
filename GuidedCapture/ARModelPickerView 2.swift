@@ -328,33 +328,30 @@ private final class ARHoloUSDZViewController: UIViewController {
 
     private func addLocalLights(around root: Entity) {
         var key = PointLightComponent()
-        key.intensity = 5000
-        key.attenuationRadius = 2.0
+        key.intensity = 6000
+        key.attenuationRadius = 2.5
         key.color = UIColor.white
 
         let keyEntity = Entity()
         keyEntity.components.set(key)
-        keyEntity.position = SIMD3<Float>(0.15, 0.25, 0.15)
+        keyEntity.position = SIMD3<Float>(0.2, 0.3, 0.2)
         root.addChild(keyEntity)
 
         keyLightEntity = keyEntity
         originalKeyIntensity = key.intensity
 
-        var rim = SpotLightComponent()
-        rim.intensity = 8000
-        rim.attenuationRadius = 3.0
-        rim.innerAngleInDegrees = 15
-        rim.outerAngleInDegrees = 35
-        rim.color = UIColor.cyan
+        var fill = PointLightComponent()
+        fill.intensity = 4000
+        fill.attenuationRadius = 2.5
+        fill.color = UIColor.white
 
-        let rimEntity = Entity()
-        rimEntity.components.set(rim)
-        rimEntity.position = SIMD3<Float>(-0.15, 0.2, 0.15)
-        rimEntity.look(at: .zero, from: rimEntity.position, relativeTo: root)
-        root.addChild(rimEntity)
+        let fillEntity = Entity()
+        fillEntity.components.set(fill)
+        fillEntity.position = SIMD3<Float>(-0.2, 0.2, 0.2)
+        root.addChild(fillEntity)
 
-        rimLightEntity = rimEntity
-        originalRimIntensity = rim.intensity
+        rimLightEntity = fillEntity
+        originalRimIntensity = fill.intensity
     }
 
     private func addCoachingOverlay() {
@@ -737,6 +734,10 @@ private class HologramOverlayView: UIView {
             applyHologramMaterial(to: pivot)
             addHDRIAndLights(to: pivot)
 
+            let doubleTap = UITapGestureRecognizer(target: self, action: #selector(closeTapped))
+            doubleTap.numberOfTapsRequired = 2
+            holoARView.addGestureRecognizer(doubleTap)
+
         } catch {
             print("Failed to load model for hologram: \(error)")
         }
@@ -750,31 +751,37 @@ private class HologramOverlayView: UIView {
 
     private func applyHologramMaterial(to entity: ModelEntity) {
         var material = SimpleMaterial()
-        material.color = .init(tint: .cyan.withAlphaComponent(0.85))
-        material.metallic = .float(0.9)
-        material.roughness = .float(0.15)
+        material.color = .init(tint: .white.withAlphaComponent(0.9))
+        material.metallic = .float(0.7)
+        material.roughness = .float(0.3)
         entity.model?.materials = [material]
 
         var glowMaterial = UnlitMaterial()
-        glowMaterial.color = .init(tint: UIColor.cyan.withAlphaComponent(0.3))
+        glowMaterial.color = .init(tint: UIColor.white.withAlphaComponent(0.2))
         entity.model?.materials.append(glowMaterial)
     }
 
     private func addHDRIAndLights(to root: Entity) {
-        let lightPositions: [(SIMD3<Float>, UIColor, Float)] = [
-            (SIMD3<Float>(0.2, 0.3, 0.2), UIColor.white, 6000),
-            (SIMD3<Float>(-0.2, 0.3, 0.2), UIColor.white, 6000),
-            (SIMD3<Float>(0.2, 0.3, -0.2), UIColor.cyan, 5000),
-            (SIMD3<Float>(-0.2, 0.3, -0.2), UIColor.cyan, 5000),
-            (SIMD3<Float>(0, 0.4, 0), UIColor.white, 7000),
-            (SIMD3<Float>(0, -0.1, 0.3), UIColor.cyan.withAlphaComponent(0.7), 4000)
+        let lightPositions: [(SIMD3<Float>, Float)] = [
+            (SIMD3<Float>(0.2, 0.3, 0.2), 5000),
+            (SIMD3<Float>(-0.2, 0.3, 0.2), 5000),
+            (SIMD3<Float>(0.2, 0.3, -0.2), 5000),
+            (SIMD3<Float>(-0.2, 0.3, -0.2), 5000),
+            (SIMD3<Float>(0.2, 0, 0.2), 4000),
+            (SIMD3<Float>(-0.2, 0, 0.2), 4000),
+            (SIMD3<Float>(0.2, 0, -0.2), 4000),
+            (SIMD3<Float>(-0.2, 0, -0.2), 4000),
+            (SIMD3<Float>(0, 0.4, 0), 6000),
+            (SIMD3<Float>(0, -0.1, 0.3), 4000),
+            (SIMD3<Float>(0, 0, 0.3), 5000),
+            (SIMD3<Float>(0, 0, -0.3), 5000)
         ]
 
-        for (position, color, intensity) in lightPositions {
+        for (position, intensity) in lightPositions {
             var light = PointLightComponent()
             light.intensity = intensity
-            light.attenuationRadius = 2.5
-            light.color = color
+            light.attenuationRadius = 3.0
+            light.color = UIColor.white
 
             let entity = Entity()
             entity.components.set(light)
@@ -783,13 +790,22 @@ private class HologramOverlayView: UIView {
         }
 
         var topLight = DirectionalLightComponent()
-        topLight.intensity = 8000
-        topLight.color = UIColor.cyan
+        topLight.intensity = 7000
+        topLight.color = UIColor.white
 
         let topEntity = Entity()
         topEntity.components.set(topLight)
         topEntity.look(at: .zero, from: SIMD3<Float>(0, 1, 0), relativeTo: nil)
         root.addChild(topEntity)
+
+        var bottomLight = DirectionalLightComponent()
+        bottomLight.intensity = 5000
+        bottomLight.color = UIColor.white
+
+        let bottomEntity = Entity()
+        bottomEntity.components.set(bottomLight)
+        bottomEntity.look(at: .zero, from: SIMD3<Float>(0, -1, 0), relativeTo: nil)
+        root.addChild(bottomEntity)
     }
 
     private func startHologramAnimation() {
@@ -811,20 +827,32 @@ private class HologramOverlayView: UIView {
 
         let elapsed = CACurrentMediaTime() - startTime
 
-        let cycleDuration: Double = 2.5
-        let progress = Float((elapsed.truncatingRemainder(dividingBy: cycleDuration)) / cycleDuration)
-        let eased = 0.5 - 0.5 * cos(.pi * progress)
-        let angleY = 2.0 * Float.pi * eased
+        let cycleDuration: Double = 3.5
+        let pauseDuration: Double = 0.4
+        let totalCycle = cycleDuration + pauseDuration
+
+        let cycleProgress = elapsed.truncatingRemainder(dividingBy: totalCycle)
+        var rotationProgress: Float = 0
+
+        if cycleProgress < cycleDuration {
+            rotationProgress = Float(cycleProgress / cycleDuration)
+        } else {
+            rotationProgress = 1.0
+        }
+
+        let eased = 0.5 - 0.5 * cos(.pi * rotationProgress)
+        let fullRotations = Float(elapsed / cycleDuration)
+        let currentRotation = 2.0 * Float.pi * fullRotations + 2.0 * Float.pi * eased
 
         let floatElapsed = Float(elapsed)
-        let floatFreq: Float = 3.0
-        let floatAmp: Float = 0.008
+        let floatFreq: Float = 2.5
+        let floatAmp: Float = 0.02
         let floatOffset = floatAmp * sin(floatFreq * floatElapsed)
 
         let tiltAngle = Float(10.0 + 5.0 * sin(floatFreq * 0.5 * floatElapsed))
 
         var transform = Transform()
-        let rotationY = simd_quatf(angle: angleY, axis: SIMD3<Float>(0, 1, 0))
+        let rotationY = simd_quatf(angle: currentRotation, axis: SIMD3<Float>(0, 1, 0))
         let rotationX = simd_quatf(angle: tiltAngle * .pi / 180.0, axis: SIMD3<Float>(1, 0, 0))
         transform.rotation = simd_mul(rotationY, rotationX)
         transform.translation = SIMD3<Float>(0, floatOffset, 0)

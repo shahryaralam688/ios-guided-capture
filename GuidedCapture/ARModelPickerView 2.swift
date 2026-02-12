@@ -187,6 +187,19 @@ private final class ARHoloUSDZViewController: UIViewController {
 
     private var placementAnchor: AnchorEntity?
     private var isPlaced: Bool = false
+    private var isModelEnlarged: Bool = false
+    private var originalScale: SIMD3<Float>?
+    private var originalTransformBeforeEnlarge: Transform?
+
+    private var isLongPressHoloActive: Bool = false
+    private var longPressWorkItems: [DispatchWorkItem] = []
+    private var longPressHoloStartTime: CFTimeInterval?
+    private var longPressHoloBaseTransform: Transform?
+    private var longPressHoloLights: [Entity] = []
+
+    private let liftDistance: Float = 0.3
+    private let liftDuration: TimeInterval = 2.5
+    private let scaleDuration: TimeInterval = 1.2
 
     private var keyLightEntity: Entity?
     private var rimLightEntity: Entity?
@@ -246,6 +259,10 @@ private final class ARHoloUSDZViewController: UIViewController {
         singleTap.require(toFail: doubleTap)
         arView.addGestureRecognizer(singleTap)
 
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(didLongPress(_:)))
+        longPress.minimumPressDuration = 0.5
+        arView.addGestureRecognizer(longPress)
+
         addCoachingOverlay()
 
         addDoneButton()
@@ -254,6 +271,7 @@ private final class ARHoloUSDZViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        stopLongPressHoloAndRestoreIfNeeded()
         stopAnimation()
         arView.session.pause()
     }
@@ -280,8 +298,6 @@ private final class ARHoloUSDZViewController: UIViewController {
         do {
             let entity = try Entity.load(contentsOf: modelFile)
             entity.generateCollisionShapes(recursive: true)
-            // Create a pivot that is centered on the model's visual bounds.
-            // Rotating the pivot will spin the model around its own center (not an offset origin).
             let bounds = entity.visualBounds(relativeTo: nil)
             let center = bounds.center
 
@@ -289,7 +305,6 @@ private final class ARHoloUSDZViewController: UIViewController {
             entity.position = -center
             pivot.addChild(entity)
 
-            // Ensure pivot is gesture-capable (ModelEntity conforms to HasCollision, but needs collision shapes to hit-test reliably).
             pivot.generateCollisionShapes(recursive: true)
 
             modelRoot = entity
@@ -298,8 +313,6 @@ private final class ARHoloUSDZViewController: UIViewController {
 
             addLocalLights(around: entity)
 
-            // QuickLook-style placement: automatically attach the model to a horizontal plane anchor.
-            // This will place the model as soon as ARKit detects a surface.
             if placementAnchor == nil {
                 let planeAnchor: AnchorEntity
                 if #available(iOS 13.4, *) {
@@ -317,6 +330,15 @@ private final class ARHoloUSDZViewController: UIViewController {
 
                 placementAnchor = planeAnchor
                 isPlaced = true
+
+                // Gentle initial rise so the user can clearly see the model settle above the floor.
+                // Use RealityKit animation (not UIView.animate) so the entity transform actually animates.
+                let parent = pivot.parent
+                let finalTransform = pivot.transform
+                var startTransform = finalTransform
+                startTransform.translation.y -= liftDistance
+                pivot.transform = startTransform
+                pivot.move(to: finalTransform, relativeTo: parent, duration: liftDuration, timingFunction: .easeInOut)
 
                 if let gestureTarget {
                     arView.installGestures([.translation, .rotation, .scale], for: gestureTarget)
@@ -397,6 +419,187 @@ private final class ARHoloUSDZViewController: UIViewController {
             showHologramOverlay()
         }
     }
+
+    @objc private func didLongPress(_ recognizer: UILongPressGestureRecognizer) {
+        guard recognizer.state == .began, isPlaced, let pivot = modelPivot, let root = modelRoot else { return }
+        let location = recognizer.location(in: arView)
+        if let tapped = arView.entity(at: location), tapped.isDescendant(of: root) || tapped.isDescendant(of: pivot) {
+            toggleLongPressHolo()
+        }
+    }
+
+    private func addHoloHDRIAndLights(to root: Entity) {
+        // Multiple point lights for holo effect.
+        let lightPositions: [(SIMD3<Float>, Float)] = [
+            (SIMD3<Float>(0.2, 0.3, 0.2), 5000),
+            (SIMD3<Float>(-0.2, 0.3, 0.2), 5000),
+            (SIMD3<Float>(0.2, 0.3, -0.2), 5000),
+            (SIMD3<Float>(-0.2, 0.3, -0.2), 5000),
+            (SIMD3<Float>(0.2, 0, 0.2), 4000),
+            (SIMD3<Float>(-0.2, 0, 0.2), 4000),
+            (SIMD3<Float>(0.2, 0, -0.2), 4000),
+            (SIMD3<Float>(-0.2, 0, -0.2), 4000),
+            (SIMD3<Float>(0, 0.4, 0), 6000),
+            (SIMD3<Float>(0, -0.1, 0.3), 4000),
+            (SIMD3<Float>(0, 0, 0.3), 5000),
+            (SIMD3<Float>(0, 0, -0.3), 5000)
+        ]
+
+        for (position, intensity) in lightPositions {
+            var light = PointLightComponent()
+            light.intensity = intensity
+            light.attenuationRadius = 3.0
+            light.color = UIColor.white
+
+            let entity = Entity()
+            entity.components.set(light)
+            entity.position = position
+            root.addChild(entity)
+            longPressHoloLights.append(entity)
+        }
+
+        var topLight = DirectionalLightComponent()
+        topLight.intensity = 7000
+        topLight.color = UIColor.white
+
+        let topEntity = Entity()
+        topEntity.components.set(topLight)
+        topEntity.look(at: .zero, from: SIMD3<Float>(0, 1, 0), relativeTo: nil)
+        root.addChild(topEntity)
+        longPressHoloLights.append(topEntity)
+
+        var bottomLight = DirectionalLightComponent()
+        bottomLight.intensity = 5000
+        bottomLight.color = UIColor.white
+
+        let bottomEntity = Entity()
+        bottomEntity.components.set(bottomLight)
+        bottomEntity.look(at: .zero, from: SIMD3<Float>(0, -1, 0), relativeTo: nil)
+        root.addChild(bottomEntity)
+        longPressHoloLights.append(bottomEntity)
+    }
+
+    private func removeHoloHDRIAndLights() {
+        for light in longPressHoloLights {
+            light.removeFromParent()
+        }
+        longPressHoloLights.removeAll()
+    }
+
+    private func toggleLongPressHolo() {
+        guard let pivot = modelPivot else { return }
+
+        if isLongPressHoloActive {
+            stopLongPressHoloAndRestoreIfNeeded()
+            return
+        }
+
+        cancelLongPressWorkItems()
+        stopAnimation()
+        isLongPressHoloActive = true
+
+        originalTransformBeforeEnlarge = pivot.transform
+        originalScale = pivot.scale
+
+        // Add HDRI lighting and multiple point lights for holo effect.
+        addHoloHDRIAndLights(to: pivot)
+        setHoloLightingBoosted(true)
+
+        guard let originalScale else { return }
+        let enlargedScale = originalScale * SIMD3<Float>(repeating: 3.0)
+
+        let parent = pivot.parent
+
+        // Step 1: lift slowly.
+        let current = pivot.transform
+        var lifted = current
+        lifted.translation.y += liftDistance
+        pivot.move(to: lifted, relativeTo: parent, duration: liftDuration, timingFunction: .easeInOut)
+
+        // Step 2: after lift completes, scale up gradually.
+        let scaleWork = DispatchWorkItem { [weak self, weak pivot] in
+            guard let self, let pivot else { return }
+            var scaled = pivot.transform
+            scaled.scale = enlargedScale
+            pivot.move(to: scaled, relativeTo: parent, duration: self.scaleDuration, timingFunction: .easeInOut)
+
+            // Step 3: after scaling completes, begin continuous holo motion.
+            let startHoloWork = DispatchWorkItem { [weak self, weak pivot] in
+                guard let self, let pivot else { return }
+                self.longPressHoloBaseTransform = pivot.transform
+                self.startLongPressHoloMotionLoop()
+            }
+            self.longPressWorkItems.append(startHoloWork)
+            DispatchQueue.main.asyncAfter(deadline: .now() + self.scaleDuration, execute: startHoloWork)
+        }
+
+        longPressWorkItems.append(scaleWork)
+        DispatchQueue.main.asyncAfter(deadline: .now() + self.liftDuration, execute: scaleWork)
+    }
+
+    private func startLongPressHoloMotionLoop() {
+        guard isLongPressHoloActive, displayLink == nil else { return }
+        longPressHoloStartTime = CACurrentMediaTime()
+        let link = CADisplayLink(target: self, selector: #selector(stepLongPressHolo))
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+    }
+
+    @objc private func stepLongPressHolo() {
+        guard isLongPressHoloActive,
+              let start = longPressHoloStartTime,
+              let pivot = modelPivot,
+              let base = longPressHoloBaseTransform else {
+            stopAnimation()
+            return
+        }
+
+        let elapsed = CACurrentMediaTime() - start
+        let t = Float(elapsed)
+
+        // Continuous left-to-right rotation + subtle tilt + gentle bob.
+        let omega: Float = 2.0 * .pi * 0.5
+        let tiltAmplitudeDeg: Float = 8.0
+        let bobAmplitude: Float = 0.01
+
+        let yaw = omega * t  // Continuous rotation in one direction only
+        let tilt = (tiltAmplitudeDeg * .pi / 180.0) * sin(omega * 0.8 * t)
+        let bob = bobAmplitude * sin(omega * 1.2 * t)
+
+        var updated = base
+        let yawRot = simd_quatf(angle: yaw, axis: SIMD3<Float>(0, 1, 0))
+        let tiltRot = simd_quatf(angle: tilt, axis: SIMD3<Float>(1, 0, 0))
+        updated.rotation = simd_mul(simd_mul(base.rotation, yawRot), tiltRot)
+        updated.translation = base.translation + SIMD3<Float>(0, bob, 0)
+        pivot.transform = updated
+    }
+
+    private func stopLongPressHoloAndRestoreIfNeeded() {
+        guard let pivot = modelPivot else { return }
+
+        cancelLongPressWorkItems()
+        isLongPressHoloActive = false
+        longPressHoloStartTime = nil
+        longPressHoloBaseTransform = nil
+        stopAnimation()
+
+        // Remove HDRI lighting and restore original lighting.
+        removeHoloHDRIAndLights()
+        setHoloLightingBoosted(false)
+
+        if let original = originalTransformBeforeEnlarge {
+            let parent = pivot.parent
+            pivot.move(to: original, relativeTo: parent, duration: liftDuration, timingFunction: .easeInOut)
+        }
+    }
+
+    private func cancelLongPressWorkItems() {
+        for item in longPressWorkItems {
+            item.cancel()
+        }
+        longPressWorkItems.removeAll()
+    }
+
 
     private func showHologramOverlay() {
         guard let root = modelRoot else { return }

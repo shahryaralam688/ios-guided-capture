@@ -16,6 +16,7 @@ struct GuidedCaptureSampleApp: App {
             if #available(iOS 17.0, *) {
 //                ContentView()
                 ARModelPickerView()
+//                ARPlacementViewController()
             }
         }
     }

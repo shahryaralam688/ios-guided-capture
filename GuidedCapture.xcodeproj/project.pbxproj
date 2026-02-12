@@ -45,6 +45,7 @@
 		70D2F73F2A33A38900EFA0D8 /* ScanPasses-iPad-FixedHeight-1.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 70D2F7342A33A37E00EFA0D8 /* ScanPasses-iPad-FixedHeight-1.mp4 */; };
 		B56DA3952F3CA6070061E244 /* ARModelPickerView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56DA3942F3CA6070061E244 /* ARModelPickerView 2.swift */; };
 		B56DA3972F3CA6370061E244 /* ARModelPickerView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56DA3962F3CA6370061E244 /* ARModelPickerView 2.swift */; };
+		B57B9B852F3DF27E00C17FF5 /* ARKitTesting View.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57B9B842F3DF26A00C17FF5 /* ARKitTesting View.swift */; };
 		B59203422F3B70CA005E96DC /* ImageUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59203412F3B70CA005E96DC /* ImageUploadService.swift */; };
 		EB20D5602A40331F00992055 /* AppDataModel+Orbit.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */; };
 		EB20D5622A40341C00992055 /* AppDataModel+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D5612A40341C00992055 /* AppDataModel+State.swift */; };
@@ -93,6 +94,7 @@
 		70D2F7352A33A37E00EFA0D8 /* ScanPasses-iPhone-FixedHeight-3.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ScanPasses-iPhone-FixedHeight-3.mp4"; sourceTree = "<group>"; };
 		B56DA3942F3CA6070061E244 /* ARModelPickerView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ARModelPickerView 2.swift"; sourceTree = "<group>"; };
 		B56DA3962F3CA6370061E244 /* ARModelPickerView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ARModelPickerView 2.swift"; sourceTree = "<group>"; };
+		B57B9B842F3DF26A00C17FF5 /* ARKitTesting View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ARKitTesting View.swift"; sourceTree = "<group>"; };
 		B59203412F3B70CA005E96DC /* ImageUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadService.swift; sourceTree = "<group>"; };
 		B63694814766022DF0079B53 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
 		EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDataModel+Orbit.swift"; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 		70D2F6ED2A339DD500EFA0D8 /* GuidedCapture */ = {
 			isa = PBXGroup;
 			children = (
+				B57B9B842F3DF26A00C17FF5 /* ARKitTesting View.swift */,
 				B56DA3962F3CA6370061E244 /* ARModelPickerView 2.swift */,
 				B56DA3942F3CA6070061E244 /* ARModelPickerView 2.swift */,
 				4A3358052B07FB5A00B5603A /* Info.plist */,
@@ -294,6 +297,7 @@
 				70D2F7222A339E4A00EFA0D8 /* OnboardingButtonView+LocalizedString.swift in Sources */,
 				70D2F7202A339E4A00EFA0D8 /* TimedMessageList.swift in Sources */,
 				B56DA3952F3CA6070061E244 /* ARModelPickerView 2.swift in Sources */,
+				B57B9B852F3DF27E00C17FF5 /* ARKitTesting View.swift in Sources */,
 				EB20D5652A40363D00992055 /* CaptureOverlayView+Buttons.swift in Sources */,
 				70D2F7162A339E4A00EFA0D8 /* GuidedCaptureSampleApp.swift in Sources */,
 				B59203422F3B70CA005E96DC /* ImageUploadService.swift in Sources */,

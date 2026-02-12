@@ -197,6 +197,12 @@ private final class ARHoloUSDZViewController: UIViewController {
     private var longPressHoloBaseTransform: Transform?
     private var longPressHoloLights: [Entity] = []
 
+    private var productDetailView: UIVisualEffectView?
+    private var productDetailContentStack: UIStackView?
+    private var productDetailChevronButton: UIButton?
+    private var isProductDetailCollapsed: Bool = false
+    private var productDetailHeightConstraint: NSLayoutConstraint?
+
     private let liftDistance: Float = 0.3
     private let liftDuration: TimeInterval = 2.5
     private let scaleDuration: TimeInterval = 1.2
@@ -258,10 +264,6 @@ private final class ARHoloUSDZViewController: UIViewController {
         singleTap.numberOfTapsRequired = 1
         singleTap.require(toFail: doubleTap)
         arView.addGestureRecognizer(singleTap)
-
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(didLongPress(_:)))
-        longPress.minimumPressDuration = 0.5
-        arView.addGestureRecognizer(longPress)
 
         addCoachingOverlay()
 
@@ -416,15 +418,118 @@ private final class ARHoloUSDZViewController: UIViewController {
         guard isPlaced, let pivot = modelPivot, let root = modelRoot else { return }
         let location = recognizer.location(in: arView)
         if let tapped = arView.entity(at: location), tapped.isDescendant(of: root) || tapped.isDescendant(of: pivot) {
-            showHologramOverlay()
+            toggleLongPressHolo()
         }
     }
 
-    @objc private func didLongPress(_ recognizer: UILongPressGestureRecognizer) {
-        guard recognizer.state == .began, isPlaced, let pivot = modelPivot, let root = modelRoot else { return }
-        let location = recognizer.location(in: arView)
-        if let tapped = arView.entity(at: location), tapped.isDescendant(of: root) || tapped.isDescendant(of: pivot) {
-            toggleLongPressHolo()
+    private func showProductDetailsIfNeeded() {
+        guard productDetailView == nil else {
+            productDetailView?.isHidden = false
+            return
+        }
+
+        let blur = UIBlurEffect(style: .systemMaterial)
+        let container = UIVisualEffectView(effect: blur)
+        container.layer.cornerRadius = 14
+        container.clipsToBounds = true
+
+        let titleLabel = UILabel()
+        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.textColor = .label
+        titleLabel.text = "TacTech AR Product"
+
+        let priceLabel = UILabel()
+        priceLabel.font = .preferredFont(forTextStyle: .title3)
+        priceLabel.textColor = .label
+        priceLabel.text = "$199.99"
+
+        let chevronButton = UIButton(type: .system)
+        chevronButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        chevronButton.addTarget(self, action: #selector(toggleProductDetailCollapsed), for: .touchUpInside)
+
+        let headerLeftStack = UIStackView(arrangedSubviews: [titleLabel, priceLabel])
+        headerLeftStack.axis = .vertical
+        headerLeftStack.alignment = .leading
+        headerLeftStack.spacing = 2
+
+        let headerStack = UIStackView(arrangedSubviews: [headerLeftStack, chevronButton])
+        headerStack.axis = .horizontal
+        headerStack.alignment = .center
+        headerStack.spacing = 12
+
+        let spec1 = UILabel()
+        spec1.font = .preferredFont(forTextStyle: .subheadline)
+        spec1.textColor = .secondaryLabel
+        spec1.text = "SKU: TT-AR-001"
+
+        let spec2 = UILabel()
+        spec2.font = .preferredFont(forTextStyle: .subheadline)
+        spec2.textColor = .secondaryLabel
+        spec2.text = "Color: Space Gray"
+
+        let spec3 = UILabel()
+        spec3.font = .preferredFont(forTextStyle: .subheadline)
+        spec3.textColor = .secondaryLabel
+        spec3.text = "In Stock: 24"
+
+        let spec4 = UILabel()
+        spec4.font = .preferredFont(forTextStyle: .subheadline)
+        spec4.textColor = .secondaryLabel
+        spec4.text = "Delivery: 2–4 days"
+
+        let contentStack = UIStackView(arrangedSubviews: [spec1, spec2, spec3, spec4])
+        contentStack.axis = .vertical
+        contentStack.alignment = .leading
+        contentStack.spacing = 4
+
+        let rootStack = UIStackView(arrangedSubviews: [headerStack, contentStack])
+        rootStack.axis = .vertical
+        rootStack.alignment = .fill
+        rootStack.spacing = 10
+        rootStack.isLayoutMarginsRelativeArrangement = true
+        rootStack.layoutMargins = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        rootStack.translatesAutoresizingMaskIntoConstraints = false
+
+        container.contentView.addSubview(rootStack)
+        NSLayoutConstraint.activate([
+            rootStack.leadingAnchor.constraint(equalTo: container.contentView.leadingAnchor),
+            rootStack.trailingAnchor.constraint(equalTo: container.contentView.trailingAnchor),
+            rootStack.topAnchor.constraint(equalTo: container.contentView.topAnchor),
+            rootStack.bottomAnchor.constraint(equalTo: container.contentView.bottomAnchor)
+        ])
+
+        container.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(container)
+
+        let heightConstraint = container.heightAnchor.constraint(equalToConstant: 150)
+        heightConstraint.isActive = true
+        productDetailHeightConstraint = heightConstraint
+
+        NSLayoutConstraint.activate([
+            container.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+            container.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
+            container.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10)
+        ])
+
+        productDetailView = container
+        productDetailContentStack = contentStack
+        productDetailChevronButton = chevronButton
+        isProductDetailCollapsed = false
+    }
+
+    private func hideProductDetailsIfNeeded() {
+        productDetailView?.isHidden = true
+    }
+
+    @objc private func toggleProductDetailCollapsed() {
+        isProductDetailCollapsed.toggle()
+        productDetailContentStack?.isHidden = isProductDetailCollapsed
+        let imageName = isProductDetailCollapsed ? "chevron.up" : "chevron.down"
+        productDetailChevronButton?.setImage(UIImage(systemName: imageName), for: .normal)
+
+        productDetailHeightConstraint?.constant = isProductDetailCollapsed ? 72 : 150
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.view.layoutIfNeeded()
         }
     }
 
@@ -540,6 +645,9 @@ private final class ARHoloUSDZViewController: UIViewController {
     private func startLongPressHoloMotionLoop() {
         guard isLongPressHoloActive, displayLink == nil else { return }
         longPressHoloStartTime = CACurrentMediaTime()
+
+        showProductDetailsIfNeeded()
+
         let link = CADisplayLink(target: self, selector: #selector(stepLongPressHolo))
         link.add(to: .main, forMode: .common)
         displayLink = link
@@ -586,6 +694,8 @@ private final class ARHoloUSDZViewController: UIViewController {
         // Remove HDRI lighting and restore original lighting.
         removeHoloHDRIAndLights()
         setHoloLightingBoosted(false)
+
+        hideProductDetailsIfNeeded()
 
         if let original = originalTransformBeforeEnlarge {
             let parent = pivot.parent
@@ -937,10 +1047,6 @@ private class HologramOverlayView: UIView {
             applyHologramMaterial(to: pivot)
             addHDRIAndLights(to: pivot)
 
-            let doubleTap = UITapGestureRecognizer(target: self, action: #selector(closeTapped))
-            doubleTap.numberOfTapsRequired = 2
-            holoARView.addGestureRecognizer(doubleTap)
-
         } catch {
             print("Failed to load model for hologram: \(error)")
         }
@@ -1068,10 +1174,5 @@ private class HologramOverlayView: UIView {
         displayLink?.invalidate()
         displayLink = nil
         startTime = nil
-    }
-
-    override func removeFromSuperview() {
-        stopAnimation()
-        super.removeFromSuperview()
     }
 }

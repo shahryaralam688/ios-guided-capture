@@ -23,7 +23,7 @@ class ImageUploadService: ObservableObject {
     @Published var isUploading: Bool = false
     @Published var uploadStatus: String = ""
     
-    init(baseURL: String = "http://localhost:8000") {
+    init(baseURL: String = "http://192.168.18.31:8000") {
         // Configure URLSession with appropriate timeout for large uploads
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 300 // 5 minutes

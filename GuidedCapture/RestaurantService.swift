@@ -5,7 +5,7 @@ Fetches restaurant list from the TacTech backend.
 import Foundation
 import os
 
-struct Restaurant: Identifiable, Codable, Hashable {
+struct Restaurant: Identifiable, Decodable, Hashable {
     let id: String
     let name: String
 
@@ -89,7 +89,7 @@ final class RestaurantService {
             return restaurants
         }
 
-        struct WrappedList: Codable {
+        struct WrappedList: Decodable {
             let restaurants: [Restaurant]?
             let items: [Restaurant]?
             let data: [Restaurant]?

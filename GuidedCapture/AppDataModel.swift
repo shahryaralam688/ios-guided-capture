@@ -47,7 +47,14 @@ class AppDataModel: ObservableObject, Identifiable {
     /// Image upload service for backend integration
     var uploadService: ImageUploadService!
 
+    @Published var selectedRestaurantId: String?
+    @Published var selectedRestaurantName: String?
+    @Published private(set) var lastScanJobId: String?
+    @Published private(set) var lastScanId: String?
+
     @Published var messageList = TimedMessageList()
+
+    private var capturePending = false
 
     @Published var state: ModelState = .notSet {
         didSet {
@@ -92,12 +99,25 @@ class AppDataModel: ObservableObject, Identifiable {
     private init(objectCaptureSession: ObjectCaptureSession) {
         self.objectCaptureSession = objectCaptureSession
         uploadService = ImageUploadService()
-        state = .ready
+        state = .notSet
     }
 
-    // Leaves the model state in ready.
-     private init() {
+    private init() {
         uploadService = ImageUploadService()
+        state = .notSet
+    }
+
+    func selectRestaurant(id: String, name: String) {
+        selectedRestaurantId = id
+        selectedRestaurantName = name
+    }
+
+    func startScan() {
+        guard selectedRestaurantId != nil else {
+            logger.error("startScan() called without a selected restaurant")
+            return
+        }
+        capturePending = true
         state = .ready
     }
 
@@ -243,7 +263,8 @@ class AppDataModel: ObservableObject, Identifiable {
         orbit = .orbit1
         orbitState = .initial
         isObjectFlipped = false
-        state = .ready
+        capturePending = false
+        state = .notSet
     }
 
     private func onStateChanged(newState: ObjectCaptureSession.CaptureState) {
@@ -292,6 +313,8 @@ class AppDataModel: ObservableObject, Identifiable {
 
         switch toState {
             case .ready:
+                guard capturePending else { break }
+                capturePending = false
                 guard startNewCapture() else {
                     logger.error("Starting new capture failed!")
                     break
@@ -359,7 +382,13 @@ class AppDataModel: ObservableObject, Identifiable {
             return
         }
         
-        logger.info("Starting image upload process...")
+        guard let restaurantId = selectedRestaurantId else {
+            logger.error("No restaurant selected, cannot upload images")
+            messageList.add("Upload skipped: no restaurant selected")
+            return
+        }
+
+        logger.info("Starting image upload process for restaurant \(restaurantId)...")
         print("[AppDataModel] Images folder path: \(folderManager.imagesFolder.path)")
         
         // Get all image files from the images folder
@@ -385,14 +414,20 @@ class AppDataModel: ObservableObject, Identifiable {
                 
                 // Upload images using the upload service
                 await MainActor.run {
-                    uploadService.uploadImages(imageUrls: imageUrls) { [weak self] result in
+                    uploadService.uploadImages(imageUrls: imageUrls, restaurantId: restaurantId) { [weak self] result in
                         guard let self = self else { return }
                         
                         switch result {
-                        case .success:
+                        case .success(let response):
+                            self.lastScanJobId = response.scanJobId
+                            self.lastScanId = response.scanId
+                            let statusMessage = response.message ?? "Images uploaded successfully to server"
                             self.logger.info("All images uploaded successfully to backend")
-                            self.messageList.add("Images uploaded successfully to server")
-                            print("[AppDataModel] Upload SUCCESS - All images sent to backend")
+                            self.messageList.add(statusMessage)
+                            if let scanJobId = response.scanJobId {
+                                self.messageList.add("Scan job: \(scanJobId)")
+                            }
+                            print("[AppDataModel] Upload SUCCESS - scan_job_id=\(response.scanJobId ?? "nil")")
                         case .failure(let error):
                             self.logger.error("Image upload failed: \(error.localizedDescription)")
                             self.messageList.add("Upload failed: \(error.localizedDescription)")

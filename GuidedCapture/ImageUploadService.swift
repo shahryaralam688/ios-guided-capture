@@ -10,6 +10,23 @@ import Foundation
 import os
 import Combine
 
+struct ScanUploadResponse: Codable {
+    let scanJobId: String?
+    let scanId: String?
+    let restaurantId: String?
+    let status: String?
+    let message: String?
+    let imagesUploaded: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case scanJobId = "scan_job_id"
+        case scanId = "scan_id"
+        case restaurantId = "restaurant_id"
+        case status, message
+        case imagesUploaded = "images_uploaded"
+    }
+}
+
 class ImageUploadService: ObservableObject {
     static let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem,
                                 category: "ImageUploadService")
@@ -22,9 +39,8 @@ class ImageUploadService: ObservableObject {
     @Published var uploadProgress: Double = 0.0
     @Published var isUploading: Bool = false
     @Published var uploadStatus: String = ""
-    //https://sheryl-biocellate-sympathizingly.ngrok-free.dev
-    // local:http://192.168.18.31:8000
-    init(baseURL: String = "https://sheryl-biocellate-sympathizingly.ngrok-free.dev") {
+
+    init(baseURL: String = BackendConfig.baseURL) {
         // Configure URLSession with appropriate timeout for large uploads
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 300 // 5 minutes
@@ -40,14 +56,23 @@ class ImageUploadService: ObservableObject {
     /// Uploads multiple image files to the backend using multipart/form-data
     /// - Parameters:
     ///   - imageUrls: Array of local file URLs for the images to upload
+    ///   - restaurantId: Selected restaurant UUID (required by backend)
     ///   - completion: Completion handler with success/failure result
-    func uploadImages(imageUrls: [URL], completion: @escaping (Result<Void, Error>) -> Void) {
-        logger.info("Starting upload of \(imageUrls.count) images")
+    func uploadImages(imageUrls: [URL],
+                      restaurantId: String,
+                      completion: @escaping (Result<ScanUploadResponse, Error>) -> Void) {
+        logger.info("Starting upload of \(imageUrls.count) images for restaurant \(restaurantId)")
         print("[ImageUploadService] Starting upload of \(imageUrls.count) images to \(uploadURL.absoluteString)")
         
         guard !imageUrls.isEmpty else {
             logger.error("No images provided for upload")
             completion(.failure(UploadError.noImages))
+            return
+        }
+
+        guard !restaurantId.isEmpty else {
+            logger.error("No restaurant_id provided for upload")
+            completion(.failure(UploadError.missingRestaurantId))
             return
         }
         
@@ -69,8 +94,8 @@ class ImageUploadService: ObservableObject {
         
         Task {
             do {
-                let request = try createMultipartRequest(imageUrls: imageUrls)
-                try await performUpload(request: request, imageUrls: imageUrls, completion: completion)
+                let request = try createMultipartRequest(imageUrls: imageUrls, restaurantId: restaurantId)
+                try await performUpload(request: request, completion: completion)
             } catch {
                 logger.error("Upload failed with error: \(error.localizedDescription)")
                 print("[ImageUploadService] Upload failed before request: \(error.localizedDescription)")
@@ -83,8 +108,8 @@ class ImageUploadService: ObservableObject {
         }
     }
     
-    /// Creates a multipart/form-data request with all images
-    private func createMultipartRequest(imageUrls: [URL]) throws -> URLRequest {
+    /// Creates a multipart/form-data request with restaurant_id and all images
+    private func createMultipartRequest(imageUrls: [URL], restaurantId: String) throws -> URLRequest {
         var request = URLRequest(url: uploadURL)
         request.httpMethod = "POST"
         
@@ -97,6 +122,11 @@ class ImageUploadService: ObservableObject {
         
         // Build multipart body
         var body = Data()
+
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"restaurant_id\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(restaurantId)\r\n".data(using: .utf8)!)
+        print("[ImageUploadService] Added restaurant_id: \(restaurantId)")
         
         for (index, imageUrl) in imageUrls.enumerated() {
             let imageData = try Data(contentsOf: imageUrl)
@@ -125,7 +155,8 @@ class ImageUploadService: ObservableObject {
     }
     
     /// Performs the actual upload with progress tracking using async/await
-    private func performUpload(request: URLRequest, imageUrls: [URL], completion: @escaping (Result<Void, Error>) -> Void) async throws {
+    private func performUpload(request: URLRequest,
+                               completion: @escaping (Result<ScanUploadResponse, Error>) -> Void) async throws {
         // Use async upload(for:from:) API.
         // Important: the URLRequest passed to upload(for:from:) must NOT also have httpBody set,
         // otherwise URLSession logs a warning and may ignore/override the body.
@@ -155,12 +186,13 @@ class ImageUploadService: ObservableObject {
             print("[ImageUploadService] Response status code: \(httpResponse.statusCode)")
 
             if 200...299 ~= httpResponse.statusCode {
+                let uploadResponse = try decodeUploadResponse(from: data)
                 self.logger.info("All images uploaded successfully")
                 DispatchQueue.main.async {
-                    self.uploadStatus = "Upload completed successfully"
+                    self.uploadStatus = uploadResponse.message ?? "Upload completed successfully"
                     print("[ImageUploadService] Upload completed successfully")
                 }
-                completion(.success(()))
+                completion(.success(uploadResponse))
             } else {
                 let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
                 self.logger.error("Server returned error: \(httpResponse.statusCode) - \(errorMessage)")
@@ -180,11 +212,26 @@ class ImageUploadService: ObservableObject {
             throw error
         }
     }
+
+    private func decodeUploadResponse(from data: Data) throws -> ScanUploadResponse {
+        do {
+            return try JSONDecoder().decode(ScanUploadResponse.self, from: data)
+        } catch {
+            logger.warning("Could not decode upload response JSON: \(error.localizedDescription)")
+            return ScanUploadResponse(scanJobId: nil,
+                                      scanId: nil,
+                                      restaurantId: nil,
+                                      status: "uploaded",
+                                      message: "Upload completed successfully",
+                                      imagesUploaded: nil)
+        }
+    }
 }
 
 // MARK: - Error Types
 enum UploadError: LocalizedError {
     case noImages
+    case missingRestaurantId
     case fileNotFound(URL)
     case invalidResponse
     case serverError(Int, String)
@@ -193,6 +240,8 @@ enum UploadError: LocalizedError {
         switch self {
         case .noImages:
             return "No images provided for upload"
+        case .missingRestaurantId:
+            return "No restaurant selected for upload"
         case .fileNotFound(let url):
             return "Image file not found: \(url.lastPathComponent)"
         case .invalidResponse:

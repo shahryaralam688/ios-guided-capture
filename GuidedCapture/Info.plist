@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>BackendBaseURL</key>
-	<string>http://localhost:8000</string>
+	<string>https://sheryl-biocellate-sympathizingly.ngrok-free.dev</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

@@ -30,6 +30,8 @@ struct ReconstructionPrimaryView: View {
                 ModelView(modelFile: outputFile, endCaptureCallback: { [weak appModel] in
                     appModel?.endCapture()
                 })
+
+                ScanUploadStatusView()
                 
                 // Upload progress section
                 if let uploadService = uploadService, uploadService.isUploading {
@@ -271,6 +273,33 @@ private struct TitleView: View {
 }
 
 // MARK: - Upload Progress View
+@available(iOS 17.0, *)
+struct ScanUploadStatusView: View {
+    @EnvironmentObject var appModel: AppDataModel
+
+    var body: some View {
+        if let restaurantName = appModel.selectedRestaurantName {
+            VStack(spacing: 4) {
+                Text("Restaurant: \(restaurantName)")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.9))
+
+                if let scanJobId = appModel.lastScanJobId {
+                    Text("Scan job: \(scanJobId)")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.75))
+                } else if !appModel.uploadService.uploadStatus.isEmpty {
+                    Text(appModel.uploadService.uploadStatus)
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.75))
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+    }
+}
+
 @available(iOS 17.0, *)
 struct UploadProgressView: View {
     @ObservedObject var uploadService: ImageUploadService

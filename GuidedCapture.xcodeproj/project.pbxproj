@@ -47,6 +47,9 @@
 		B56DA3972F3CA6370061E244 /* ARModelPickerView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56DA3962F3CA6370061E244 /* ARModelPickerView 2.swift */; };
 		B57B9B852F3DF27E00C17FF5 /* ARKitTesting View.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57B9B842F3DF26A00C17FF5 /* ARKitTesting View.swift */; };
 		B59203422F3B70CA005E96DC /* ImageUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59203412F3B70CA005E96DC /* ImageUploadService.swift */; };
+		C1A2B3C52F4A000100REST01 /* BackendConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C42F4A000100REST01 /* BackendConfig.swift */; };
+		C1A2B3C72F4A000100REST02 /* RestaurantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C62F4A000100REST02 /* RestaurantService.swift */; };
+		C1A2B3C92F4A000100REST03 /* RestaurantSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C82F4A000100REST03 /* RestaurantSelectionView.swift */; };
 		EB20D5602A40331F00992055 /* AppDataModel+Orbit.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */; };
 		EB20D5622A40341C00992055 /* AppDataModel+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D5612A40341C00992055 /* AppDataModel+State.swift */; };
 		EB20D5652A40363D00992055 /* CaptureOverlayView+Buttons.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB20D5642A40363D00992055 /* CaptureOverlayView+Buttons.swift */; };
@@ -96,6 +99,9 @@
 		B56DA3962F3CA6370061E244 /* ARModelPickerView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ARModelPickerView 2.swift"; sourceTree = "<group>"; };
 		B57B9B842F3DF26A00C17FF5 /* ARKitTesting View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ARKitTesting View.swift"; sourceTree = "<group>"; };
 		B59203412F3B70CA005E96DC /* ImageUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadService.swift; sourceTree = "<group>"; };
+		C1A2B3C42F4A000100REST01 /* BackendConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfig.swift; sourceTree = "<group>"; };
+		C1A2B3C62F4A000100REST02 /* RestaurantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantService.swift; sourceTree = "<group>"; };
+		C1A2B3C82F4A000100REST03 /* RestaurantSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantSelectionView.swift; sourceTree = "<group>"; };
 		B63694814766022DF0079B53 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
 		EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDataModel+Orbit.swift"; sourceTree = "<group>"; };
 		EB20D5612A40341C00992055 /* AppDataModel+State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDataModel+State.swift"; sourceTree = "<group>"; };
@@ -144,6 +150,9 @@
 				70D2F70E2A339E4A00EFA0D8 /* AppDataModel.swift */,
 				EB20D55F2A40331F00992055 /* AppDataModel+Orbit.swift */,
 				B59203412F3B70CA005E96DC /* ImageUploadService.swift */,
+				C1A2B3C42F4A000100REST01 /* BackendConfig.swift */,
+				C1A2B3C62F4A000100REST02 /* RestaurantService.swift */,
+				C1A2B3C82F4A000100REST03 /* RestaurantSelectionView.swift */,
 				EB20D5612A40341C00992055 /* AppDataModel+State.swift */,
 				70D2F7052A339E4A00EFA0D8 /* CaptureFolderManager.swift */,
 				70D2F6FD2A339E4A00EFA0D8 /* CaptureOverlayView.swift */,
@@ -301,6 +310,9 @@
 				EB20D5652A40363D00992055 /* CaptureOverlayView+Buttons.swift in Sources */,
 				70D2F7162A339E4A00EFA0D8 /* GuidedCaptureSampleApp.swift in Sources */,
 				B59203422F3B70CA005E96DC /* ImageUploadService.swift in Sources */,
+				C1A2B3C52F4A000100REST01 /* BackendConfig.swift in Sources */,
+				C1A2B3C72F4A000100REST02 /* RestaurantService.swift in Sources */,
+				C1A2B3C92F4A000100REST03 /* RestaurantSelectionView.swift in Sources */,
 				70D2F71F2A339E4A00EFA0D8 /* TutorialVideoView.swift in Sources */,
 				70D2F7192A339E4A00EFA0D8 /* HelpPageView.swift in Sources */,
 				70D2F7152A339E4A00EFA0D8 /* OnboardingTutorialView+LocalizedString.swift in Sources */,

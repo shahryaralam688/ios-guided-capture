@@ -20,12 +20,14 @@ struct ContentView: View {
     @State private var showReconstructionView: Bool = false
     @State private var showErrorAlert: Bool = false
     private var showProgressView: Bool {
-        appModel.state == .completed || appModel.state == .restart || appModel.state == .ready
+        appModel.state == .ready
     }
 
     var body: some View {
         VStack {
-            if appModel.state == .capturing {
+            if appModel.state == .notSet {
+                RestaurantSelectionView()
+            } else if appModel.state == .capturing {
                 if let session = appModel.objectCaptureSession {
                     CapturePrimaryView(session: session)
                 }

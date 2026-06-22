@@ -112,7 +112,8 @@ class ImageUploadService: ObservableObject {
     private func createMultipartRequest(imageUrls: [URL], restaurantId: String) throws -> URLRequest {
         var request = URLRequest(url: uploadURL)
         request.httpMethod = "POST"
-        
+        request.setValue("true", forHTTPHeaderField: "ngrok-skip-browser-warning")
+
         // Create boundary string
         let boundary = "Boundary-\(UUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")

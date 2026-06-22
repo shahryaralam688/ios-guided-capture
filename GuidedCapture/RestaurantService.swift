@@ -8,6 +8,27 @@ import os
 struct Restaurant: Identifiable, Codable, Hashable {
     let id: String
     let name: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case restaurantId = "restaurant_id"
+        case name
+    }
+
+    init(id: String, name: String) {
+        self.id = id
+        self.name = name
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let id = try container.decodeIfPresent(String.self, forKey: .id) {
+            self.id = id
+        } else {
+            self.id = try container.decode(String.self, forKey: .restaurantId)
+        }
+        self.name = try container.decode(String.self, forKey: .name)
+    }
 }
 
 enum RestaurantServiceError: LocalizedError {
@@ -43,6 +64,7 @@ final class RestaurantService {
     func fetchRestaurants() async throws -> [Restaurant] {
         var request = URLRequest(url: restaurantsURL)
         request.httpMethod = "GET"
+        request.setValue("true", forHTTPHeaderField: "ngrok-skip-browser-warning")
 
         let (data, response) = try await session.data(for: request)
 
@@ -55,7 +77,9 @@ final class RestaurantService {
             throw RestaurantServiceError.serverError(httpResponse.statusCode, message)
         }
 
-        return try decodeRestaurants(from: data)
+        let restaurants = try decodeRestaurants(from: data)
+        Self.logger.info("Fetched \(restaurants.count) restaurants")
+        return restaurants
     }
 
     private func decodeRestaurants(from data: Data) throws -> [Restaurant] {
@@ -77,6 +101,8 @@ final class RestaurantService {
             if let data = wrapped.data { return data }
         }
 
+        let preview = String(data: data.prefix(200), encoding: .utf8) ?? ""
+        Self.logger.error("Restaurant decode failed. Body preview: \(preview)")
         throw RestaurantServiceError.decodingFailed
     }
 }
